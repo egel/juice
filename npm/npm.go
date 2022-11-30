@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+const NodeModulesDirPath = "./node_modules"
+const NpmPackageFilePath = "package.json"
+const NpmPackageLockFilePath = "package-lock.json"
+
 type License struct {
 	Name          string `json:"name"`
 	Version       string `json:"version"`
@@ -33,19 +37,40 @@ func RemoveAllNpmTreeCharacters(input string) string {
 }
 
 func InstallPackageLock() {
-	fmt.Println("Installing packages from 'package-lock.json'")
-	if _, err := os.Stat("./node_modules"); !os.IsNotExist(err) {
+	fmt.Println("Installing packages from 'package-lock.json' (it may take few minutes...)")
+	if _, err := os.Stat(NodeModulesDirPath); !os.IsNotExist(err) {
 		fmt.Println("using cached version!")
 		return
 	}
-	fmt.Println("it may take few minutes...")
 
 	cmd := exec.Command("npm", "ci")
-	stdout, err := cmd.Output()
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
 	if err != nil {
 		log.Fatalln("can not install packages:", err)
 	}
-	fmt.Println(string(stdout))
+}
+
+func IsNpmPackagesFilesExistOrDie() {
+	if _, err := exists(NpmPackageFilePath); err != nil {
+		log.Fatalf("%s does not exist", NpmPackageFilePath)
+	}
+	if _, err := exists(NpmPackageLockFilePath); err != nil {
+		log.Fatalf("%s does not exist", NpmPackageLockFilePath)
+	}
+}
+
+func IsNodeModuleExistOrDie() {
+	var path = NodeModulesDirPath
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			log.Fatalf("'%s' directory not exist", path)
+		} else {
+			log.Fatal("some other error", err)
+		}
+	}
 }
 
 func GetListProductionPackagesFromPackageLock() string {
@@ -141,6 +166,9 @@ func checkExistenceOfLicenceFile(path string) (string, error) {
 		"COPYING.txt",
 		"COPYING.md",
 	}
+	if _, err := os.Stat(path); err == nil {
+		log.Fatalf("'%s' directory not exist", path)
+	}
 	for _, el := range arr {
 		filePath := path + "/" + el
 		if _, err := os.Stat(filePath); err == nil {
@@ -148,4 +176,15 @@ func checkExistenceOfLicenceFile(path string) (string, error) {
 		}
 	}
 	return "", errors.New("license file not found in path: " + path)
+}
+
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }

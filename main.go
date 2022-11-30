@@ -12,7 +12,9 @@ import (
 
 func main() {
 	// Install packages
+	npm.IsNpmPackagesFilesExistOrDie()
 	npm.InstallPackageLock()
+	npm.IsNodeModuleExistOrDie()
 
 	// Get list of
 	fmt.Println("Start gathering the list of production packages...")

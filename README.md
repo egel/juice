@@ -9,9 +9,10 @@ Give me the juice! - Simple and quick tool to help extract production licenses f
 git clone git@github.com:egel/juice.git
 
 # build version for your OS
-go build main.go
+go build -o bin/main
 
-# execute program (make sure package-lock.json is next to it)
+# copy generated 'bin/main' program to location with 'package.json' and 'package-lock.json' files
+# and execute
 ./main
 ```
 

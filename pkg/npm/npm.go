@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	url2 "net/url"
 	"os"
 	"os/exec"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -21,6 +23,7 @@ type License struct {
 	Version       string `json:"version"`
 	LicenseType   string `json:"license"`
 	LicenseText   string
+	LicenseUrl    string
 	Homepage      string `json:"homepage"`
 	RepositoryUrl string `json:"repository.url"`
 }
@@ -37,10 +40,12 @@ func RemoveAllNpmTreeCharacters(input string) string {
 }
 
 func InstallPackageLock() {
-	fmt.Println("Installing packages from 'package-lock.json' (it may take few minutes...)")
+	fmt.Println("Installing packages from 'package-lock.json'")
 	if _, err := os.Stat(NodeModulesDirPath); !os.IsNotExist(err) {
-		fmt.Println("using cached version!")
+		fmt.Println("Skipping installation and using existing node_modules (remove node_modules to trigger installation)")
 		return
+	} else {
+		fmt.Println("(it may take up to few minutes...)")
 	}
 
 	cmd := exec.Command("npm", "ci")
@@ -49,7 +54,7 @@ func InstallPackageLock() {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		log.Fatalln("can not install packages:", err)
+		log.Fatalln("Error while installing packages: ", err)
 	}
 }
 
@@ -142,22 +147,31 @@ func fetchPackageDetails(ch chan<- License, packageName string) {
 	}
 
 	// Get LICENSE
-	filePath, err := checkExistenceOfLicenceFile("./node_modules/" + license.Name)
+	licenseFilePath, licenseFileName, err := checkExistenceOfLicenceFile("./node_modules/" + license.Name)
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		contents, err := os.ReadFile(filePath)
+		// license file
+		contents, err := os.ReadFile(licenseFilePath)
 		if err != nil {
 			fmt.Println("file reading error", err)
 		}
 		license.LicenseText = string(contents)
+
+		// license link
+		link := getLicenceFileUrl(license, licenseFileName)
+		license.LicenseUrl = link
+
+		// fix link for git repo
+		repo := ungitRepoUrl(license.RepositoryUrl)
+		license.RepositoryUrl = repo
 	}
 
 	ch <- license
 	close(ch)
 }
 
-func checkExistenceOfLicenceFile(path string) (string, error) {
+func checkExistenceOfLicenceFile(path string) (string, string, error) {
 	arr := []string{
 		"LICENSE",
 		"LICENSE.txt",
@@ -166,16 +180,45 @@ func checkExistenceOfLicenceFile(path string) (string, error) {
 		"COPYING.txt",
 		"COPYING.md",
 	}
-	if _, err := os.Stat(path); err == nil {
-		log.Fatalf("'%s' directory not exist", path)
-	}
 	for _, el := range arr {
 		filePath := path + "/" + el
 		if _, err := os.Stat(filePath); err == nil {
-			return filePath, nil
+			return filePath, el, nil
 		}
 	}
-	return "", errors.New("license file not found in path: " + path)
+	return "", "", errors.New("license file not found in path: " + path)
+}
+
+func getLicenceFileUrl(license License, licenseFileName string) string {
+	repoUrlClean := ungitRepoUrl(license.RepositoryUrl)
+	repoUrlParsed, err := url2.Parse(repoUrlClean)
+	if err != nil {
+		fmt.Println("can not parse url", repoUrlClean, err)
+	}
+	var repoUrl string
+	domain := repoUrlParsed.Host
+	path := repoUrlParsed.Path
+
+	switch domain {
+	case "github.com":
+		repoUrl = "https://raw.githubusercontent.com" + path + "/" + license.Version + "/" + licenseFileName
+	case "gitlab.com":
+		repoUrl = "gitlab"
+	default:
+		repoUrl = "not known"
+	}
+	return repoUrl
+}
+
+func ungitRepoUrl(input string) string {
+	result := input
+	// prefix
+	noGitPrefix := regexp.MustCompile("(?m)^git\\+")
+	result = noGitPrefix.ReplaceAllString(input, "")
+	// postfix
+	noGitPostfix := regexp.MustCompile("(?m)\\.git$")
+	result = noGitPostfix.ReplaceAllString(result, "")
+	return result
 }
 
 func exists(path string) (bool, error) {

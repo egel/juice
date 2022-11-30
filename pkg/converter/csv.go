@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"juice/npm"
+	"juice/pkg/npm"
 )
 
 func SaveDataToCSVFile(licenses []npm.License) {

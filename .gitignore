@@ -14,5 +14,6 @@ package-lock.json
 package.json
 
 *.csv
+bin/
 main
 

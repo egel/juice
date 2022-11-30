@@ -6,30 +6,18 @@ import (
 	"strings"
 )
 
-func RemoveProjectPackageNameLine(input string, packageName string) string {
+func RemoveProjectPackageNameLine(multiline string, packageName string) string {
 	regProjectName := regexp.MustCompile("(?m)^" + packageName + ".*$")
-	return regProjectName.ReplaceAllString(input, "")
+	return regProjectName.ReplaceAllString(multiline, "")
 }
 
-func RemoveDedupedPackages(input string) string {
+func RemoveDedupedPackages(multiline string) string {
 	regDeduped := regexp.MustCompile("(?m)[\r\n]+^.*deduped.*$")
-	return regDeduped.ReplaceAllString(input, "")
+	return regDeduped.ReplaceAllString(multiline, "")
 }
 
 func RemoveEmptyLines(input string) string {
 	return regexp.MustCompile(`[\t\r\n]+`).ReplaceAllString(strings.TrimSpace(input), "\n")
-}
-
-func RemoveDuplicateStr(strSlice []string) []string {
-	allKeys := make(map[string]bool)
-	var list []string
-	for _, item := range strSlice {
-		if _, value := allKeys[item]; !value {
-			allKeys[item] = true
-			list = append(list, item)
-		}
-	}
-	return list
 }
 
 func MultilinestringToArray(multiline string) []string {

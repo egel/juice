@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"juice/array"
 	"juice/converter"
 	"juice/multistring"
 	"juice/npm"
@@ -22,7 +23,7 @@ func main() {
 	stringsClean = npm.RemoveAllNpmTreeCharacters(stringsClean)    // remove npm tree
 	stringsClean = multistring.RemoveEmptyLines(stringsClean)      // clean remaining empty lines
 	packages := multistring.MultilinestringToArray(stringsClean)   // to array
-	cleanPackages := multistring.RemoveDuplicateStr(packages)      // remove duplicate lines
+	cleanPackages := array.RemoveDuplicateStr(packages)            // remove duplicate lines
 	sort.Strings(packages)                                         // sort lines
 
 	fmt.Println("Fetching related license texts...")

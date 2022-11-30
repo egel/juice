@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -70,12 +71,12 @@ func FetchPackagesLicences(packageList []string) []License {
 	}
 
 	// create cases and spawn requests
+	fmt.Println("Start spawning parallel requests and waiting for results...")
 	cases := make([]reflect.SelectCase, len(myChannels))
 	for k, ch := range myChannels {
 		cases[k] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ch)}
 		go fetchPackageDetails(ch, packageList[k])
 	}
-	fmt.Println("Waiting for results...")
 
 	// remaining
 	remaining := len(cases)
@@ -92,6 +93,12 @@ func FetchPackagesLicences(packageList []string) []License {
 	}
 
 	return licences
+}
+
+func SortSlices(licenses []License) {
+	sort.Slice(licenses, func(i, j int) bool {
+		return licenses[i].Name < licenses[j].Name
+	})
 }
 
 func fetchPackageDetails(ch chan<- License, packageName string) {
@@ -130,6 +137,9 @@ func checkExistenceOfLicenceFile(path string) (string, error) {
 		"LICENSE",
 		"LICENSE.txt",
 		"LICENSE.md",
+		"COPYING",
+		"COPYING.txt",
+		"COPYING.md",
 	}
 	for _, el := range arr {
 		filePath := path + "/" + el

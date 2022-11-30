@@ -15,7 +15,16 @@ func SaveDataToCSVFile(licenses []npm.License) {
 	}
 
 	writer := csv.NewWriter(csvFile)
-	headers := []string{"Package Name", "Version", "Home URL", "Repository URL", "License Type", "License Text"}
+	headers := []string{
+		"Package Name (npm)",
+		"Version (npm)",
+		"Link to NPM package (npm)", // FIXME
+		"Homepage (npm)",
+		"Repository URL (npm)",
+		"License Type (npm)",
+		"License Text (node_modules)",
+		"License Url (experimental forecast, can be incorrect)",
+	}
 	if err := writer.Write(headers); err != nil {
 		log.Fatal("can not save header for CSV file")
 	}
@@ -35,9 +44,11 @@ func structToSlice(license npm.License) []string {
 	return []string{
 		license.Name,
 		license.Version,
+		license.NpmPackageUrl,
 		license.Homepage,
 		license.RepositoryUrl,
 		license.LicenseType,
 		license.LicenseText,
+		license.LicenseUrl,
 	}
 }

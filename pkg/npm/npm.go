@@ -15,17 +15,18 @@ import (
 )
 
 const NodeModulesDirPath = "./node_modules"
-const NpmPackageFilePath = "package.json"
-const NpmPackageLockFilePath = "package-lock.json"
+const PackageJsonFilePath = "./package.json"
+const PackageLockJsonFilePath = "./package-lock.json"
 
 type License struct {
-	Name          string `json:"name"`
-	Version       string `json:"version"`
-	LicenseType   string `json:"license"`
-	LicenseText   string
-	LicenseUrl    string
-	Homepage      string `json:"homepage"`
-	RepositoryUrl string `json:"repository.url"`
+	Name          string `json:"name"`    // npm field
+	Version       string `json:"version"` // npm field
+	LicenseType   string `json:"license"` // npm field
+	LicenseText   string // node_modules
+	LicenseUrl    string // experimental prediction of URL
+	Homepage      string `json:"homepage"`       // npm field
+	RepositoryUrl string `json:"repository.url"` // npm field
+	NpmPackageUrl string // npm URL
 }
 
 func RemoveAllNpmTreeCharacters(input string) string {
@@ -59,11 +60,11 @@ func InstallPackageLock() {
 }
 
 func IsNpmPackagesFilesExistOrDie() {
-	if _, err := exists(NpmPackageFilePath); err != nil {
-		log.Fatalf("%s does not exist", NpmPackageFilePath)
+	if _, err := exists(PackageJsonFilePath); err != nil {
+		log.Fatalf("%s does not exist", PackageJsonFilePath)
 	}
-	if _, err := exists(NpmPackageLockFilePath); err != nil {
-		log.Fatalf("%s does not exist", NpmPackageLockFilePath)
+	if _, err := exists(PackageLockJsonFilePath); err != nil {
+		log.Fatalf("%s does not exist", PackageLockJsonFilePath)
 	}
 }
 
@@ -89,9 +90,7 @@ func GetListProductionPackagesFromPackageLock() string {
 
 func FetchPackagesLicences(packageList []string) []License {
 	var licences []License
-
 	count := len(packageList)
-	//count := 5
 
 	// create array of channels
 	var myChannels []chan License
@@ -108,7 +107,7 @@ func FetchPackagesLicences(packageList []string) []License {
 		go fetchPackageDetails(ch, packageList[k])
 	}
 
-	// remaining
+	// waiting for remaining requests
 	remaining := len(cases)
 	for remaining > 0 {
 		chosen, value, ok := reflect.Select(cases)
@@ -135,36 +134,36 @@ func fetchPackageDetails(ch chan<- License, packageName string) {
 	fmt.Println("starting fetching data for " + packageName)
 	var license License
 	cmd := exec.Command("npm", "info", packageName, "--json", "name", "version", "license", "homepage", "repository.url")
-
 	stdout, err := cmd.Output()
 	if err != nil {
 		log.Fatalf("cmd fatal: %v", err)
 	}
-
 	err = json.Unmarshal(stdout, &license)
 	if err != nil {
 		fmt.Println("can not unmarshal!", err)
 	}
+
+	// Adding link to npm package
+	license.NpmPackageUrl = "https://www.npmjs.com/package/" + license.Name + "/v/" + license.Version
+
+	// Clean repository URL
+	license.RepositoryUrl = ungitRepositoryUrl(license.RepositoryUrl)
 
 	// Get LICENSE
 	licenseFilePath, licenseFileName, err := checkExistenceOfLicenceFile("./node_modules/" + license.Name)
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		// license file
+		// Add license file (if exist)
 		contents, err := os.ReadFile(licenseFilePath)
 		if err != nil {
 			fmt.Println("file reading error", err)
 		}
 		license.LicenseText = string(contents)
 
-		// license link
+		// Add experimental link to license
 		link := getLicenceFileUrl(license, licenseFileName)
 		license.LicenseUrl = link
-
-		// fix link for git repo
-		repo := ungitRepoUrl(license.RepositoryUrl)
-		license.RepositoryUrl = repo
 	}
 
 	ch <- license
@@ -190,7 +189,7 @@ func checkExistenceOfLicenceFile(path string) (string, string, error) {
 }
 
 func getLicenceFileUrl(license License, licenseFileName string) string {
-	repoUrlClean := ungitRepoUrl(license.RepositoryUrl)
+	repoUrlClean := ungitRepositoryUrl(license.RepositoryUrl)
 	repoUrlParsed, err := url2.Parse(repoUrlClean)
 	if err != nil {
 		fmt.Println("can not parse url", repoUrlClean, err)
@@ -201,7 +200,9 @@ func getLicenceFileUrl(license License, licenseFileName string) string {
 
 	switch domain {
 	case "github.com":
-		repoUrl = "https://raw.githubusercontent.com" + path + "/" + license.Version + "/" + licenseFileName
+		// The solution below tries to predict the most popular way by appending "v" to its numeric version (exposed by GitHub releases)
+		// Although each repository may have different way of marking/tagging its versions, therefore some links may not work as expected.
+		repoUrl = "https://raw.githubusercontent.com" + path + "/v" + license.Version + "/" + licenseFileName
 	case "gitlab.com":
 		repoUrl = "gitlab"
 	default:
@@ -210,7 +211,7 @@ func getLicenceFileUrl(license License, licenseFileName string) string {
 	return repoUrl
 }
 
-func ungitRepoUrl(input string) string {
+func ungitRepositoryUrl(input string) string {
 	result := input
 	// prefix
 	noGitPrefix := regexp.MustCompile("(?m)^git\\+")

@@ -1,0 +1,14 @@
+# Operating system
+.DS_Store
+
+# editors
+.idea/
+
+# project structure
+bin/
+main
+
+# npm related
+node_modules/
+package-lock.json
+package.json

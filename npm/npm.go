@@ -2,15 +2,12 @@ package npm
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
-	url2 "net/url"
 	"os"
 	"os/exec"
 	"reflect"
-	"regexp"
 	"strings"
 )
 
@@ -62,8 +59,8 @@ func GetListProductionPackagesFromPackageLock() string {
 func FetchPackagesLicences(packageList []string) []License {
 	var licences []License
 
-	//count := len(cleanPackages)
-	count := 5
+	count := len(packageList)
+	//count := 5
 
 	// create array of channels
 	var myChannels []chan License
@@ -90,16 +87,15 @@ func FetchPackagesLicences(packageList []string) []License {
 			remaining -= 1
 			continue
 		}
-		license, _ := reflect.ValueOf(value).Interface().(License)
-		licences = append(licences, license)
-		fmt.Printf("Read from channel %#v and received %#v\n", myChannels[chosen], value)
+
+		licences = append(licences, value.Interface().(License))
 	}
 
 	return licences
 }
 
 func fetchPackageDetails(ch chan<- License, packageName string) {
-	fmt.Println("starting " + packageName)
+	fmt.Println("starting fetching data for " + packageName)
 	var license License
 	cmd := exec.Command("npm", "info", packageName, "--json", "name", "version", "license", "homepage", "repository.url")
 
@@ -114,62 +110,32 @@ func fetchPackageDetails(ch chan<- License, packageName string) {
 	}
 
 	// Get LICENSE
-	contents, err := os.ReadFile("./node_modules/" + license.Name + "/LICENSE")
+	filePath, err := checkExistenceOfLicenceFile("./node_modules/" + license.Name)
 	if err != nil {
-		fmt.Println("File reading error", err)
+		fmt.Println(err)
+	} else {
+		contents, err := os.ReadFile(filePath)
+		if err != nil {
+			fmt.Println("file reading error", err)
+		}
+		license.LicenseText = string(contents)
 	}
-	license.LicenseText = string(contents)
 
 	ch <- license
 	close(ch)
 }
 
-func ungitRepoUrl(input string) string {
-	result := input
-	// prefix
-	noGitPrefix := regexp.MustCompile("(?m)^git\\+")
-	result = noGitPrefix.ReplaceAllString(input, "")
-	// postfix
-	noGitPostfix := regexp.MustCompile("(?m)\\.git$")
-	result = noGitPostfix.ReplaceAllString(result, "")
-	return result
-}
-
-// @deprecated
-func getLicenceOld(license License) {
-	// TODO: get licence text
-	urlString := ungitRepoUrl(license.RepositoryUrl)
-	fmt.Printf("urlString: %#v", urlString)
-
-	url, err := url2.Parse(urlString)
-	if err != nil {
-		log.Fatal("fatal url parse", err)
+func checkExistenceOfLicenceFile(path string) (string, error) {
+	arr := []string{
+		"LICENSE",
+		"LICENSE.txt",
+		"LICENSE.md",
 	}
-	domain := url.Host
-	path := url.Path
-	//fmt.Println("url.Host:", domain, path)
-
-	var repoUrl string
-	switch domain {
-	case "github.com":
-		fmt.Println("github")
-		repoUrl = "https://raw.githubusercontent.com" + path + "/" + license.Version + "/LICENSE"
-		fmt.Println(repoUrl)
-	case "gitlab.com":
-		fmt.Println("gitlab!")
-	default:
-		fmt.Println("INNE!", license)
+	for _, el := range arr {
+		filePath := path + "/" + el
+		if _, err := os.Stat(filePath); err == nil {
+			return filePath, nil
+		}
 	}
-
-	resp, err := http.Get(repoUrl)
-	if err != nil {
-		fmt.Println("Error getting licence from:", repoUrl)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("can not read body:", err)
-	}
-	//Convert the body to type string
-	sb := string(body)
-	license.LicenseText = sb
+	return "", errors.New("license file not found in path: " + path)
 }

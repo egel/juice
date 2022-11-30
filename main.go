@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"juice/converter"
 	"juice/multistring"
 	"juice/npm"
 )
@@ -13,31 +14,21 @@ func main() {
 	npm.InstallPackageLock()
 
 	// Get list of
+	fmt.Println("Start gathering the list of production packages...")
 	stringsClean := npm.GetListProductionPackagesFromPackageLock()
 
-	// remove deduped lines
-	stringsClean = multistring.RemoveDedupedPackages(stringsClean)
+	fmt.Println("Start data cleaning process...")
+	stringsClean = multistring.RemoveDedupedPackages(stringsClean) // remove deduped lines
+	stringsClean = npm.RemoveAllNpmTreeCharacters(stringsClean)    // remove npm tree
+	stringsClean = multistring.RemoveEmptyLines(stringsClean)      // clean remaining empty lines
+	packages := multistring.MultilinestringToArray(stringsClean)   // to array
+	cleanPackages := multistring.RemoveDuplicateStr(packages)      // remove duplicate lines
+	sort.Strings(packages)                                         // sort lines
 
-	// remove npm tree
-	stringsClean = npm.RemoveAllNpmTreeCharacters(stringsClean)
-
-	// clean remaining empty lines
-	stringsClean = multistring.RemoveEmptyLines(stringsClean)
-
-	// to array
-	packages := multistring.MultilinestringToArray(stringsClean)
-
-	// remove duplicate lines
-	cleanPackages := multistring.RemoveDuplicateStr(packages)
-
-	// sort lines
-	sort.Strings(packages)
-
+	fmt.Println("Fetching related license texts...")
 	licenses := npm.FetchPackagesLicences(cleanPackages)
 
 	// print results
-	fmt.Println("Printing results")
-	for _, p := range licenses {
-		fmt.Printf("%+v\n", p)
-	}
+	fmt.Println("Preparing final result...")
+	converter.SaveDataToCSVFile(licenses)
 }

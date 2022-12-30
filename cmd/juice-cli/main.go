@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"sort"
 
-	"juice/pkg/array"
-	"juice/pkg/converter"
-	"juice/pkg/multistring"
-	"juice/pkg/npm"
+	"juice/internal/array"
+	"juice/internal/converter"
+	"juice/internal/multistring"
+	"juice/internal/npm"
 )
 
 func main() {

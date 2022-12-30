@@ -2,10 +2,9 @@ package converter
 
 import (
 	"encoding/csv"
+	"juice/internal/npm"
 	"log"
 	"os"
-
-	"juice/pkg/npm"
 )
 
 func SaveDataToCSVFile(licenses []npm.License) {

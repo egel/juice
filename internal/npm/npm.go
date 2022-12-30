@@ -83,9 +83,14 @@ func GetListProductionPackagesFromPackageLock() string {
 	cmd := exec.Command("npm", "ls", "--production", "--all", "--package-lock-only")
 	stdout, err := cmd.Output()
 	if err != nil {
+		log.Println("can not get the list of production packages from package-lock.json")
 		log.Fatal(err)
 	}
 	return string(stdout[:])
+}
+
+func PrintNumberOfPackages(arr []string) {
+	fmt.Printf("Total number of production packages: %d\n", len(arr))
 }
 
 func FetchPackagesLicences(packageList []string) []License {

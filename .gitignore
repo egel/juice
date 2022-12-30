@@ -7,6 +7,7 @@
 # project structure
 bin/
 main
+juice
 
 # npm related
 node_modules/

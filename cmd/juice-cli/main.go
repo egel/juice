@@ -28,6 +28,8 @@ func main() {
 	cleanPackages := array.RemoveDuplicateStr(packages)            // remove duplicate lines
 	sort.Strings(packages)                                         // sort lines
 
+	npm.PrintNumberOfPackages(packages)
+
 	fmt.Println("Fetching related license texts...")
 	licenses := npm.FetchPackagesLicences(cleanPackages)
 

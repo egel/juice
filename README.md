@@ -2,7 +2,12 @@
 
 Give me the juice! - Simple and quick tool to help extract production licenses from the npm package.
 
+<<<<<<< Updated upstream
 
+![How it works](docs/assets/how_it_works.gif)
+
+=======
+>>>>>>> Stashed changes
 ## Usage
 
 ```bash

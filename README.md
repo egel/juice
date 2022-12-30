@@ -2,12 +2,7 @@
 
 Give me the juice! - Simple and quick tool to help extract production licenses from the npm package.
 
-<<<<<<< Updated upstream
 
-![How it works](docs/assets/how_it_works.gif)
-
-=======
->>>>>>> Stashed changes
 ## Usage
 
 ```bash
@@ -15,11 +10,11 @@ Give me the juice! - Simple and quick tool to help extract production licenses f
 git clone git@github.com:egel/juice.git
 
 # build version for your OS
-go build -o bin/juice-cli/ple cmd/juice-cli/main.go
+make build
 
-# copy generated 'bin/juice-cli/ple' program to location with 'package.json' and 'package-lock.json' files
+# copy generated 'bin/juice-cli/juice' program to location with 'package.json' and 'package-lock.json' files
 # and execute
-./juice
+./bin/juice-cli/juice
 ```
 
 

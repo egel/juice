@@ -23,6 +23,7 @@ func SaveDataToCSVFile(licenses []npm.License) {
 		"License Type (npm)",
 		"License Text (node_modules)",
 		"License Url (experimental forecast, can be incorrect)",
+		"Error",
 	}
 	if err := writer.Write(headers); err != nil {
 		log.Fatal("can not save header for CSV file")
@@ -49,5 +50,6 @@ func structToSlice(license npm.License) []string {
 		license.LicenseType,
 		license.LicenseText,
 		license.LicenseUrl,
+		license.Error,
 	}
 }

@@ -18,14 +18,6 @@ make build
 ```
 
 
-## FAQ
-
-> **cmd fatal: pipe: too many open files**
->
-> Program use the concurrency to get all data asap to you.
-> By having this error you probably reach terminal session's limit for open files. You can increase it by: `ulimit -u 4096`
-
-
 ## License
 
 MIT License

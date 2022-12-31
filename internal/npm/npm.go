@@ -8,7 +8,6 @@ import (
 	url2 "net/url"
 	"os"
 	"os/exec"
-	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -22,11 +21,12 @@ type License struct {
 	Name          string `json:"name"`    // npm field
 	Version       string `json:"version"` // npm field
 	LicenseType   string `json:"license"` // npm field
-	LicenseText   string // node_modules
+	LicenseText   string // taken from node_modules
 	LicenseUrl    string // experimental prediction of URL
 	Homepage      string `json:"homepage"`       // npm field
 	RepositoryUrl string `json:"repository.url"` // npm field
 	NpmPackageUrl string // npm URL
+	Error         string // used only for reporting errors while fetching
 }
 
 func RemoveAllNpmTreeCharacters(input string) string {
@@ -94,39 +94,34 @@ func PrintNumberOfPackages(arr []string) {
 }
 
 func FetchPackagesLicences(packageList []string) []License {
-	var licences []License
+	packages := make(chan string, 80) // max amount of concurent routines, currently fixed
+	licenses := make(chan License)
+	var results []License
 	count := len(packageList)
 
 	// create array of channels
-	var myChannels []chan License
-	for i := 0; i < count; i++ {
-		ch := make(chan License)
-		myChannels = append(myChannels, ch)
+	for i := 0; i < cap(packages); i++ {
+		go fetchPackageDetailsWorker(packages, licenses)
 	}
 
-	// create cases and spawn requests
-	fmt.Println("Start spawning parallel requests and waiting for results...")
-	cases := make([]reflect.SelectCase, len(myChannels))
-	for k, ch := range myChannels {
-		cases[k] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ch)}
-		go fetchPackageDetails(ch, packageList[k])
-	}
-
-	// waiting for remaining requests
-	remaining := len(cases)
-	for remaining > 0 {
-		chosen, value, ok := reflect.Select(cases)
-		if !ok {
-			// The chosen channel has been closed, so zero out the channel to disable the case
-			cases[chosen].Chan = reflect.ValueOf(nil)
-			remaining -= 1
-			continue
+	// spawn requesting packages
+	go func() {
+		for i := 0; i < count; i++ {
+			packages <- packageList[i]
 		}
+	}()
 
-		licences = append(licences, value.Interface().(License))
+	// save results to array
+	for i := 1; i <= count; i++ {
+		license := <-licenses
+		fmt.Printf("count: %d/%d\n", i, count)
+		results = append(results, license)
 	}
 
-	return licences
+	close(packages)
+	close(licenses)
+
+	return results
 }
 
 func SortSlices(licenses []License) {
@@ -135,44 +130,54 @@ func SortSlices(licenses []License) {
 	})
 }
 
-func fetchPackageDetails(ch chan<- License, packageName string) {
-	fmt.Println("starting fetching data for " + packageName)
-	var license License
-	cmd := exec.Command("npm", "info", packageName, "--json", "name", "version", "license", "homepage", "repository.url")
-	stdout, err := cmd.Output()
-	if err != nil {
-		log.Fatalf("cmd fatal: %v", err)
-	}
-	err = json.Unmarshal(stdout, &license)
-	if err != nil {
-		fmt.Println("can not unmarshal!", err)
-	}
+// this is worker function
+func fetchPackageDetailsWorker(packageNames chan string, licenseResults chan License) {
+	for p := range packageNames {
+		var license License
+		fmt.Printf("fetching data for %s (%d)\n", p, len(packageNames))
 
-	// Adding link to npm package
-	license.NpmPackageUrl = "https://www.npmjs.com/package/" + license.Name + "/v/" + license.Version
-
-	// Clean repository URL
-	license.RepositoryUrl = ungitRepositoryUrl(license.RepositoryUrl)
-
-	// Get LICENSE
-	licenseFilePath, licenseFileName, err := checkExistenceOfLicenceFile("./node_modules/" + license.Name)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		// Add license file (if exist)
-		contents, err := os.ReadFile(licenseFilePath)
+		cmd := exec.Command("npm", "info", p, "--json", "name", "version", "license", "homepage", "repository.url")
+		stdout, err := cmd.Output()
 		if err != nil {
-			fmt.Println("file reading error", err)
+			msg := fmt.Sprintf("'%s': cmd fatal: %v\n", p, err)
+			license.Error = msg
+			licenseResults <- license
+			break
 		}
-		license.LicenseText = string(contents)
+		err = json.Unmarshal(stdout, &license)
+		if err != nil {
+			msg := fmt.Sprintf("'%s': can not unmarshal: %v\n", p, err)
+			license.Error = msg
+			licenseResults <- license
+			break
+		}
 
-		// Add experimental link to license
-		link := getLicenceFileUrl(license, licenseFileName)
-		license.LicenseUrl = link
+		// Adding link to npm package
+		license.NpmPackageUrl = "https://www.npmjs.com/package/" + license.Name + "/v/" + license.Version
+
+		// Clean repository URL
+		license.RepositoryUrl = ungitRepositoryUrl(license.RepositoryUrl)
+
+		// Get LICENSE
+		licenseFilePath, licenseFileName, err := checkExistenceOfLicenceFile("./node_modules/" + license.Name)
+		if err != nil {
+			fmt.Println(err)
+			license.Error = err.Error()
+		} else {
+			// Add license file (if exist)
+			contents, err := os.ReadFile(licenseFilePath)
+			if err != nil {
+				msg := fmt.Sprintf("'%s': file reading error: %v\n", p, err)
+				license.Error = msg
+			}
+			license.LicenseText = string(contents)
+
+			// Add experimental link to license
+			license.LicenseUrl = getLicenceFileUrl(license, licenseFileName)
+		}
+
+		licenseResults <- license
 	}
-
-	ch <- license
-	close(ch)
 }
 
 func checkExistenceOfLicenceFile(path string) (string, string, error) {
@@ -219,10 +224,10 @@ func getLicenceFileUrl(license License, licenseFileName string) string {
 func ungitRepositoryUrl(input string) string {
 	result := input
 	// prefix
-	noGitPrefix := regexp.MustCompile("(?m)^git\\+")
+	noGitPrefix := regexp.MustCompile(`(?m)^git\\+`)
 	result = noGitPrefix.ReplaceAllString(input, "")
 	// postfix
-	noGitPostfix := regexp.MustCompile("(?m)\\.git$")
+	noGitPostfix := regexp.MustCompile(`(?m)\\.git$`)
 	result = noGitPostfix.ReplaceAllString(result, "")
 	return result
 }

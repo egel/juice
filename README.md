@@ -1,23 +1,17 @@
-# Juice!
+<p align="center"><img alt="The Juice" width="175px" src="./docs/assets/juice.svg"/></p>
 
-Give me the juice! - Simple and quick tool to help extract production licenses from the npm package.
+# Juice
 
+ Simple and quick tool to help with extracting production licenses from the npm packages.
+
+ >  -- Just give me the juice!
 
 ## Usage
 
 ```bash
-#copy project
-git clone git@github.com:egel/juice.git
-
-# build version for your OS
-make build
-
-# copy generated 'bin/juice-cli/juice' program to location with 'package.json' and 'package-lock.json' files
-# and execute
-./bin/juice-cli/juice
+go install github.com/egel/juice@latest
 ```
-
 
 ## License
 
-MIT License
+MIT License. Logo by [Vincent Le moign](https://iconscout.com/icon/juice-247)

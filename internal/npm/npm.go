@@ -18,15 +18,15 @@ const PackageJsonFilePath = "./package.json"
 const PackageLockJsonFilePath = "./package-lock.json"
 
 type License struct {
-	Name          string `json:"name"`    // npm field
-	Version       string `json:"version"` // npm field
-	LicenseType   string `json:"license"` // npm field
-	LicenseText   string // taken from node_modules
-	LicenseUrl    string // experimental prediction of URL
-	Homepage      string `json:"homepage"`       // npm field
-	RepositoryUrl string `json:"repository.url"` // npm field
-	NpmPackageUrl string // npm URL
-	Error         string // used only for reporting errors while fetching
+	Name          string `json:"name"`    // source: npm field
+	Version       string `json:"version"` // source: npm field
+	LicenseType   string `json:"license"` // source: npm field
+	LicenseText   string // source: node_modules
+	LicenseUrl    string // source: experimental prediction of URL
+	Homepage      string `json:"homepage"`       // source: npm field
+	RepositoryUrl string `json:"repository.url"` // source: npm field
+	NpmPackageUrl string // source: npm URL
+	Error         string // source: used only for reporting errors while fetching
 }
 
 func RemoveAllNpmTreeCharacters(input string) string {
@@ -114,7 +114,7 @@ func FetchPackagesLicences(packageList []string) []License {
 	// save results to array
 	for i := 1; i <= count; i++ {
 		license := <-licenses
-		fmt.Printf("count: %d/%d\n", i, count)
+		fmt.Printf("\rProgress... %d/%d", i, count)
 		results = append(results, license)
 	}
 
@@ -134,19 +134,19 @@ func SortSlices(licenses []License) {
 func fetchPackageDetailsWorker(packageNames chan string, licenseResults chan License) {
 	for p := range packageNames {
 		var license License
-		fmt.Printf("fetching data for %s (%d)\n", p, len(packageNames))
+		//fmt.Printf("\nfetching data for %s (%d)", p, len(packageNames))
 
 		cmd := exec.Command("npm", "info", p, "--json", "name", "version", "license", "homepage", "repository.url")
 		stdout, err := cmd.Output()
 		if err != nil {
-			msg := fmt.Sprintf("'%s': cmd fatal: %v\n", p, err)
+			msg := fmt.Sprintf("\n'%s': cmd fatal: %v", p, err)
 			license.Error = msg
 			licenseResults <- license
 			break
 		}
 		err = json.Unmarshal(stdout, &license)
 		if err != nil {
-			msg := fmt.Sprintf("'%s': can not unmarshal: %v\n", p, err)
+			msg := fmt.Sprintf("\n'%s': can not unmarshal: %v", p, err)
 			license.Error = msg
 			licenseResults <- license
 			break
@@ -161,13 +161,13 @@ func fetchPackageDetailsWorker(packageNames chan string, licenseResults chan Lic
 		// Get LICENSE
 		licenseFilePath, licenseFileName, err := checkExistenceOfLicenceFile("./node_modules/" + license.Name)
 		if err != nil {
-			fmt.Println(err)
-			license.Error = err.Error()
+			msg := fmt.Sprintln(err)
+			license.Error = msg
 		} else {
 			// Add license file (if exist)
 			contents, err := os.ReadFile(licenseFilePath)
 			if err != nil {
-				msg := fmt.Sprintf("'%s': file reading error: %v\n", p, err)
+				msg := fmt.Sprintf("\n'%s': file reading error: %v", p, err)
 				license.Error = msg
 			}
 			license.LicenseText = string(contents)

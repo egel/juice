@@ -30,10 +30,11 @@ func main() {
 
 	npm.PrintNumberOfPackages(packages)
 
-	fmt.Println("Fetching related license texts...")
+	fmt.Println("Start fetching licenses...")
 	licenses := npm.FetchPackagesLicences(cleanPackages)
 
 	// print results
-	fmt.Println("Preparing final result...")
+	fmt.Printf("\nPreparing final result...")
 	converter.SaveDataToCSVFile(licenses)
+	fmt.Printf("\nDone")
 }

@@ -11,8 +11,7 @@ juice
 
 # npm related
 node_modules/
-package-lock.json
-package.json
+package*.json
 
 *.csv
 bin/

@@ -2,21 +2,13 @@ package multistring
 
 import (
 	"bufio"
-	"fmt"
 	"regexp"
 	"strings"
 )
 
-func RemoveProjectPackageNameLine(multiline string, packageName string) string {
-	regProjectName := regexp.MustCompile("(?m)^" + packageName + ".*$")
-	return regProjectName.ReplaceAllString(multiline, "")
-}
-
 func RemoveDedupedPackages(multiline string) string {
 	regDeduped := regexp.MustCompile("(?m)[\r\n]+^.*deduped.*$")
-	result := regDeduped.ReplaceAllString(multiline, "")
-	fmt.Println("Deduped packages removed")
-	return result
+	return regDeduped.ReplaceAllString(multiline, "")
 }
 
 func RemoveEmptyLines(input string) string {

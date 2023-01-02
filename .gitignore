@@ -9,6 +9,9 @@ bin/
 main
 juice
 
+# go test related
+coverage.out
+
 # npm related
 node_modules/
 package*.json

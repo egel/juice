@@ -24,8 +24,12 @@ clean:
 test:
 	go test ./...
 
+test_verbose:
+	go test ./... -v
+
 test_coverage:
 	go test ./... -coverprofile=coverage.out
+	go tool cover -html=coverage.out
 
 dep:
 	go mod download

@@ -30,13 +30,13 @@ type License struct {
 }
 
 func RemoveAllNpmTreeCharacters(input string) string {
-	str := strings.Replace(input, "│", "", -1)
-	str = strings.Replace(str, "│", "", -1)
-	str = strings.Replace(str, "├", "", -1)
-	str = strings.Replace(str, "─", "", -1)
-	str = strings.Replace(str, "┬", "", -1)
-	str = strings.Replace(str, "└", "", -1)
-	str = strings.Replace(str, " ", "", -1)
+	str := strings.ReplaceAll(input, "│", "")
+	str = strings.ReplaceAll(str, "│", "")
+	str = strings.ReplaceAll(str, "├", "")
+	str = strings.ReplaceAll(str, "─", "")
+	str = strings.ReplaceAll(str, "┬", "")
+	str = strings.ReplaceAll(str, "└", "")
+	str = strings.ReplaceAll(str, " ", "")
 	return str
 }
 
@@ -59,15 +59,6 @@ func InstallPackageLock() {
 	}
 }
 
-func IsNpmPackagesFilesExistOrDie() {
-	if _, err := exists(PackageJsonFilePath); err != nil {
-		log.Fatalf("%s does not exist", PackageJsonFilePath)
-	}
-	if _, err := exists(PackageLockJsonFilePath); err != nil {
-		log.Fatalf("%s does not exist", PackageLockJsonFilePath)
-	}
-}
-
 func IsNodeModuleExistOrDie() {
 	var path = NodeModulesDirPath
 	if _, err := os.Stat(path); err != nil {
@@ -77,6 +68,17 @@ func IsNodeModuleExistOrDie() {
 			log.Fatal("some other error", err)
 		}
 	}
+}
+
+func IsPathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }
 
 func GetListProductionPackagesFromPackageLock() string {
@@ -230,15 +232,4 @@ func ungitRepositoryUrl(input string) string {
 	noGitPostfix := regexp.MustCompile(`(?m)\\.git$`)
 	result = noGitPostfix.ReplaceAllString(result, "")
 	return result
-}
-
-func exists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
 }

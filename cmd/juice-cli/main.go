@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"sort"
 
 	"juice/internal/array"
@@ -11,8 +12,14 @@ import (
 )
 
 func main() {
-	// Install packages
-	npm.IsNpmPackagesFilesExistOrDie()
+	// Install packages or die
+	if _, err := npm.IsPathExists(npm.PackageJsonFilePath); err != nil {
+		log.Fatalf("%s does not exist", npm.PackageJsonFilePath)
+	}
+	if _, err := npm.IsPathExists(npm.PackageLockJsonFilePath); err != nil {
+		log.Fatalf("%s does not exist", npm.PackageLockJsonFilePath)
+	}
+
 	npm.InstallPackageLock()
 	npm.IsNodeModuleExistOrDie()
 

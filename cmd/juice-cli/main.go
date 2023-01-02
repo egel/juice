@@ -21,7 +21,10 @@ func main() {
 	}
 
 	npm.InstallPackageLock()
-	npm.IsNodeModuleExistOrDie()
+	nodeModules := npm.IsNodeModuleExist()
+	if nodeModules != true {
+		log.Fatalf("node_module directory not exist. Install packages first.")
+	}
 
 	// Get list of
 	fmt.Println("Start gathering the list of production packages...")

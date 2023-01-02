@@ -13,9 +13,14 @@ import (
 	"strings"
 )
 
-const NodeModulesDirPath = "./node_modules"
-const PackageJsonFilePath = "./package.json"
-const PackageLockJsonFilePath = "./package-lock.json"
+const (
+	NodeModulesDirPath      = "./node_modules"
+	PackageJsonFilePath     = "./package.json"
+	PackageLockJsonFilePath = "./package-lock.json"
+)
+
+// one per single command, so it's parallel save
+var execCommand_NpmList = exec.Command
 
 type License struct {
 	Name          string `json:"name"`    // source: npm field
@@ -59,15 +64,17 @@ func InstallPackageLock() {
 	}
 }
 
-func IsNodeModuleExistOrDie() {
+func IsNodeModuleExist() bool {
 	var path = NodeModulesDirPath
 	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
-			log.Fatalf("'%s' directory not exist", path)
+			log.Printf("directory not exist: '%s'", path)
 		} else {
-			log.Fatal("some other error", err)
+			log.Printf("general path error: '%v'", err)
 		}
+		return false
 	}
+	return true
 }
 
 func IsPathExists(path string) (bool, error) {
@@ -82,7 +89,7 @@ func IsPathExists(path string) (bool, error) {
 }
 
 func GetListProductionPackagesFromPackageLock() string {
-	cmd := exec.Command("npm", "ls", "--production", "--all", "--package-lock-only")
+	cmd := execCommand_NpmList("npm", "ls", "--production", "--all", "--package-lock-only")
 	stdout, err := cmd.Output()
 	if err != nil {
 		log.Println("can not get the list of production packages from package-lock.json")
@@ -96,7 +103,8 @@ func PrintNumberOfPackages(arr []string) {
 }
 
 func FetchPackagesLicences(packageList []string) []License {
-	packages := make(chan string, 80) // max amount of concurent routines, currently fixed
+	maxConcurentRoutines := 80 // max amount of concurent routines
+	packages := make(chan string, maxConcurentRoutines)
 	licenses := make(chan License)
 	var results []License
 	count := len(packageList)

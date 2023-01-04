@@ -5,10 +5,10 @@ import (
 	"log"
 	"sort"
 
-	"juice/internal/array"
-	"juice/internal/converter"
-	"juice/internal/multistring"
-	"juice/internal/npm"
+	"github.com/egel/juice/internal/array"
+	"github.com/egel/juice/internal/converter"
+	"github.com/egel/juice/internal/multistring"
+	"github.com/egel/juice/internal/npm"
 )
 
 func main() {

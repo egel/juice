@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"sort"
 	"strings"
 )
 
@@ -134,12 +133,6 @@ func FetchPackagesLicences(packageList []string) []License {
 	return results
 }
 
-func SortSlices(licenses []License) {
-	sort.Slice(licenses, func(i, j int) bool {
-		return licenses[i].Name < licenses[j].Name
-	})
-}
-
 // this is worker function
 func fetchPackageDetailsWorker(packageNames chan string, licenseResults chan License) {
 	for p := range packageNames {
@@ -168,7 +161,7 @@ func fetchPackageDetailsWorker(packageNames chan string, licenseResults chan Lic
 		// Clean repository URL
 		license.RepositoryUrl = ungitRepositoryUrl(license.RepositoryUrl)
 
-		// Get LICENSE
+		// Try getting LICENSE file from node_modules directory
 		licenseFilePath, licenseFileName, err := checkExistenceOfLicenceFile("./node_modules/" + license.Name)
 		if err != nil {
 			msg := fmt.Sprintln(err)

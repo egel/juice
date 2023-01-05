@@ -15,6 +15,7 @@ coverage.out
 # npm related
 node_modules/
 package*.json
+!tests/**/package*.json
 
 *.csv
 bin/

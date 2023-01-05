@@ -15,9 +15,21 @@ This tool is aiming to simplify and reduce your time with gathering informations
 
 ```bash
 go install github.com/egel/juice/cmd/juice-cli@latest
+```
 
-# check if installed correctly
-which juice-cli
+> Check if juice has been installed correctly
+>
+> ```bash
+> which juice-cli
+> ```
+
+
+### Upgrade
+
+To upgrade to latest version use
+
+```
+GONOPROXY=github.com/egel go install github.com/egel/juice/cmd/juice-cli@latest
 ```
 
 

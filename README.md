@@ -6,7 +6,7 @@ Quick and easy tool to help extract licensing information on production node pac
 
 >  -- Yeah! Give me the Juice!
 
----
+![Sample demo](./docs/screenshots/2023-01-05_demo_loop.gif)
 
 This tool is aiming to simplify and reduce your time with gathering informations about all your application's node production dependencies in single summary file, with all vital information about each package, like: *name*, *version*, *license type*, *license text*, *links to NPM/repository/homepage*, *errors*, or *direct license link (experimental)*.
 

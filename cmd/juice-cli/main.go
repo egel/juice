@@ -46,5 +46,5 @@ func main() {
 	// print results
 	fmt.Printf("\nPreparing final result...")
 	converter.SaveDataToCSVFile(licenses)
-	fmt.Printf("\nDone")
+	fmt.Printf("\nDone\n")
 }

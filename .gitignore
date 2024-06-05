@@ -6,8 +6,8 @@
 
 # project structure
 bin/
-main
-juice
+./main
+./juice
 
 # go test related
 coverage.out

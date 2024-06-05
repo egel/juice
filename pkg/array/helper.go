@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// Return array with removed duplicated strings
 func RemoveDuplicateStr(strSlice []string) []string {
 	allKeys := make(map[string]bool)
 	var list []string
@@ -16,6 +17,7 @@ func RemoveDuplicateStr(strSlice []string) []string {
 	return list
 }
 
+// Print array of strings
 func Print(arr []string) {
 	for i, val := range arr {
 		fmt.Printf("%d.\t%s\n", i, val)

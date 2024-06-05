@@ -16,6 +16,21 @@ const (
   _/ |\_,_|_\__\___|
  |__/               
 `
+	// Prohram logo with ASCII graphic
+	// created with https://www.asciiart.eu/image-to-ascii
+	LOGO_GRAPHIC = `
+      %%%   **#                         
+     +==*****#                          
+    #****+****%                         
+     %*====+==%                         
+      *=----=+#         _      _        
+      +=---==+*        (_)_  _(_)__ ___ 
+      +======+*        | | || | / _/ -_)
+       *+===+*        _/ |\_,_|_\__\___|
+        %#*%         |__/               
+      #***+**#%                         
+      %##****#%                         
+`
 )
 
 var (
@@ -30,7 +45,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   CLI_NAME,
 	Short: rootCmdShortDesc,
-	Long:  fmt.Sprintf("%s\n\n%s", LOGO_TEXT, rootCmdShortDesc),
+	Long:  fmt.Sprintf("%s\n\n%s", LOGO_GRAPHIC, rootCmdShortDesc),
 	Run: func(cmd *cobra.Command, args []string) {
 		printHelpInfo()
 	},
@@ -45,8 +60,11 @@ func init() {
 
 // Print information about program and it's usage
 func printHelpInfo() {
-	fmt.Printf("%s\n", LOGO_TEXT)
-	fmt.Printf("Welcome to %s! For more info type '%s help' or use '-h', '-help' flag.\n", CLI_NAME, CLI_NAME)
+	fmt.Printf("%s\n", LOGO_GRAPHIC)
+	fmt.Printf(
+		"Welcome to %s! For more info type '%s help', or use '-h', '-help' flags.\n",
+		CLI_NAME, CLI_NAME,
+	)
 	os.Exit(0)
 }
 

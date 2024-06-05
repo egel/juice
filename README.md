@@ -38,10 +38,10 @@ GONOPROXY=github.com/egel go install github.com/egel/juice/cmd/juice-cli@latest
 
 ```bash
 # enter the location with package.json and package-lock.json files, and run:
-juice-cli
+juice-cli get
 ```
 
-> If `juice-cli` is failing, possibly your project may have old, incorrect or outdated dependencies. Make sure you have a working installation of `package.json` and `package-lock.json`, so it can download all required packages into `node_modules`.
+> If `juice-cli` is failing, possibly your project may have old, incorrect, or outdated dependencies. Make sure you have a working installation of `package.json` and `package-lock.json`, so it can download all required packages into `node_modules`.
 
 ## License
 
